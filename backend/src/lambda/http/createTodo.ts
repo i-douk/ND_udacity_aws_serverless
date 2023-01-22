@@ -2,7 +2,8 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import * as uuid from 'uuid'
 import * as AWS from 'aws-sdk'
 import { CreateTodoRequest } from '../../requests/CreateTodoRequest'
-import { TodoItem } from '../models/TodoItem'
+import { TodoItem } from '../../models/TodoItem'
+import { getUserId } from '../utils'
 
 const docClient = new AWS.DynamoDB.DocumentClient()
 const todosTable = process.env.TODOS_TABLE
@@ -25,5 +26,14 @@ export async function createTodo(event: APIGatewayProxyEvent): Promise<APIGatewa
   await docClient.put({
     TableName: todosTable,
     Item: newItem
+  }).promise()
+  return {
+    statusCode: 201,
+    headers: {
+      'Access-Control-Allow-Origin': '*'
+    },
+    body: JSON.stringify({
+      item: newItem
+    })
   }
-
+}
