@@ -1,7 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import middy from 'middy'
 import { cors, httpErrorHandler } from 'middy/middlewares'
-import { createAttachmentPresignedUrl } from '../../businessLogic/todos'
+import { createAttachmentPresignedUrl } from '../../helpers/todos'
 import { getUserId } from '../utils'
 
 export const handler = middy(

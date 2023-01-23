@@ -1,7 +1,7 @@
 import { CustomAuthorizerEvent, CustomAuthorizerResult } from 'aws-lambda'
 import 'source-map-support/register'
 
-import { verify, decode } from 'jsonwebtoken'
+import { verify, decode, Algorithm } from 'jsonwebtoken'
 import { createLogger } from '../../utils/logger'
 import Axios from 'axios'
 import { Jwt } from '../../auth/Jwt'
@@ -60,11 +60,11 @@ async function verifyToken(authHeader: string): Promise<JwtPayload> {
   const jwks = jwksResponse.data;
 
   // Get the signing key from the JWKS that matches the kid in the header of the JWT
-  const signingKey = jwks.keys.find(key => key.kid === jwt.header.kid);
+  const signingKey = jwks.keys.find((key: { kid: string | undefined }) => key.kid === jwt.header.kid);
 
   // Verify the signature of the JWT using the signing key
   const options = {
-    algorithms: ['RS256']
+    algorithms: ['RS256'] as Algorithm[],
   };
   const result = verify(token, signingKey.publicKey, options);
 
