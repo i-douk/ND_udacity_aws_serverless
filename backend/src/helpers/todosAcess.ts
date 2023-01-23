@@ -2,6 +2,7 @@ import AWS from 'aws-sdk'
 const AWSXRay = require('aws-xray-sdk')
 import { TodoItem } from '../models/TodoItem'
 
+
 const XAWS = AWSXRay.captureAWS(AWS)
 const dynamoDb = new XAWS.DynamoDB.DocumentClient()
 const todosTable = process.env.TODOS_TABLE
