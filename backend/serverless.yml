@@ -44,11 +44,29 @@ provider:
             - xray:PutTelemetryRecords
             - xray:PutTraceSegments
           Resource: "*"
+  dynamodb:
+    start:
+      port: 8000
+      inMemory: true
+      migrate: true
+
+  documentation:
+    api:
+      info:
+        version: v1.0.0
+        title: TODO CRUD App
+        description: Serverless application for todos
+    models:
+      - name: CreateRequest
+        contentType: application/json
+        schema: ${file(models/create-todo-model.json)}
+      - name: UpdateRequest
+        contentType: application/json
+        schema: ${file(models/update-todo-model.json)}
 
 functions:
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
-
 
     GetTodos:
       handler: src/lambda/http/getTodos.handler
@@ -58,6 +76,7 @@ functions:
             path: todos
             cors: true
             authorizer: Auth
+
       iamRoleStatements:
         - Effect: Allow
           Action:
@@ -74,10 +93,17 @@ functions:
           path: todos
           cors: true
           authorizer: Auth
-          request:
-            schema:
-              application/json: ${file(models/create-todo-model.json)}
-
+          reqValidatorName: RequestBodyValidator
+          documentation:
+              summary: Create a new todo
+              description: Create a new group
+              requestModels:
+              'application/json': CreateRequest
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem
+        Resource: !GetAtt TodosTable.Arn
  
   UpdateTodo:
     handler: src/lambda/http/updateTodo.handler
@@ -87,9 +113,13 @@ functions:
           path: todos/{todoId}
           cors: true
           authorizer: Auth
-          request:
-            schema:
-              application/json: ${file(models/update-todo-model.json)}
+          reqValidatorName: RequestBodyValidator
+          documentation:
+              summary: Update  a new todo
+              description: update a new group
+              requestModels:
+              'application/json': CreateRequest
+
     iamRoleStatements:
       - Effect: Allow
         Action:
