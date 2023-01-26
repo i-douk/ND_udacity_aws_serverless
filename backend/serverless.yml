@@ -26,7 +26,7 @@ provider:
     TODOS_TABLE: TodosTable-${self:provider.stage}
     TODOS_CREATED_AT_INDEX: CreatedAtIndex
     CONNECTIONS_TABLE: Connections-${self:provider.stage}
-    TODOS_S3_BUCKET: AttachmentsBucket-${self:provider.stage}
+    TODOS_S3_BUCKET: todo-bucket-new-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
     
     
@@ -196,7 +196,6 @@ resources:
  
     AttachmentsBucket:
       Type: AWS::S3::Bucket
-      DependsOn: SNSTopicPolicy
       Properties:
         BucketName: ${self:provider.environment.TODOS_S3_BUCKET}
         CorsConfiguration:
@@ -222,6 +221,16 @@ resources:
           Ref: ApiGatewayRestApi
         ValidateRequestBody: true
         ValidateRequestParameters: false
+
+    UpdateBodyValidator :
+      Type: AWS::ApiGateway::RequestValidator
+      Properties:
+        Name: 'update-request-body-validator'
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        ValidateRequestBody: true
+        ValidateRequestParameters: false
+
 
     BucketPolicy:
       Type: AWS::S3::BucketPolicy
