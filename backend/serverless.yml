@@ -31,7 +31,6 @@ provider:
   environment:
     TODOS_TABLE: TodosTable-${self:provider.stage}
     TODOS_CREATED_AT_INDEX: CreatedAtIndex
-    CONNECTIONS_TABLE: Connections-${self:provider.stage}
     TODOS_S3_BUCKET: todo-bucket-new-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
     

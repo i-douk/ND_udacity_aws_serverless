@@ -12,19 +12,19 @@ export class TodoDataLayer {
     private readonly docClient: DocumentClient = new AWS.DynamoDB.DocumentClient(),
     private readonly s3 = new AWS.S3({ signatureVersion: 'v4' }),
     private readonly todosTable = process.env.TODOS_TABLE,
-    private readonly imageBucketName = process.env.IMAGE_BUCKET_NAME,
+    private readonly imageBucketName = process.env.TODOS_S3_BUCKET,
     private readonly signedUrlExpiration = process.env.SIGNED_URL_EXPIRATION,
-    private readonly todoIdIndex = process.env.INDEX_NAME) {
+    private readonly todoIdIndex = process.env.TODOS_CREATED_AT_INDEX) {
   }
 
-  async getAllTodos(todoItemDTO): Promise<TodoItem[]> {
+  async getAllTodos(todoItemU): Promise<TodoItem[]> {
 
     const param = {
       TableName: this.todosTable,
       IndexName: this.todoIdIndex,
       KeyConditionExpression: 'userId = :userId',
       ExpressionAttributeValues: {
-        ':userId': todoItemDTO.userId
+        ':userId': todoItemU.userId
       }
     }
 
