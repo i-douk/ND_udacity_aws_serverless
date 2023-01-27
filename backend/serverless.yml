@@ -1,6 +1,7 @@
 org: ihssandk
 app: serverless-todo-app
 service: serverless-todo-app
+frameworkVersion : '3.26.0'
 
 configValidationMode: error
 
@@ -11,10 +12,15 @@ plugins:
   - serverless-iam-roles-per-function
   - serverless-dynamodb-local
   - serverless-offline
+  - serverless-aws-documentation
+
+# package:
+#   individually: true
 
 provider:
   name: aws
   runtime: nodejs16.x
+
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
 
@@ -33,9 +39,8 @@ provider:
   # apiGateway:
   #   logging:
   #     restApi: true
-  iam:
-    role:
-      statements:
+  
+  iamRoleStatements:
         - Effect: Allow
           Action:
             - xray:PutTelemetryRecords
@@ -52,17 +57,33 @@ custom:
       port: 8000
       inMemory: true
       migrate: true
-  custom:
-  reqValidators:
-    RequestBodyValidator:
-      source: models/create-todo-model.json
-    UpdateBodyValidator:
-      source: models/update-todo-model.json
+
+  documentation:
+    api:
+      info:
+        version: v1.0.0
+        title: todo-serverless
+        description: Serverless application for todos
+    models:
+      - name: RequestBodyValidator
+        contentType: application/json
+        schema: ${file(models/create-todo-model.json)}
+      - name: UpdateBodyValidator
+        contentType: application/json
+        schema: ${file(models/update-todo-model.json)}
 
 
 functions:
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+              - dynamodb:GetItem
+              - dynamodb:Query
+              - dynamodb:Scan
+              - dynamodb:PutItem
+        Resource: "*"
 
   GetTodos:
     handler: src/lambda/http/getTodos.handler
@@ -90,7 +111,6 @@ functions:
           path: todos
           cors: true
           authorizer: Auth
-          reqValidatorName: RequestBodyValidator
 
     iamRoleStatements:
       - Effect: Allow
@@ -130,7 +150,6 @@ functions:
             path: todos/{todoId}
             cors: true
             authorizer: Auth
-            reqValidatorName: RequestBodyValidator
     iamRoleStatements:
         - Effect: Allow
           Action:
@@ -146,7 +165,6 @@ functions:
             path: todos/{todoId}/attachment
             cors: true
             authorizer: Auth
-            reqValidatorName: RequestBodyValidator
       iamRoleStatements:
       - Effect: Allow
         Action:
@@ -156,6 +174,7 @@ functions:
 
 resources:
   Resources:
+
     GatewayResponseDefault4XX:
       Type: AWS::ApiGateway::GatewayResponse
       Properties:
@@ -164,8 +183,11 @@ resources:
           gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
           gatewayresponse.header.Access-Control-Allow-Methods: "'GET,OPTIONS,POST'"
         ResponseType: DEFAULT_4XX
-        RestApiId: !Ref ApiGatewayRestApi
+        RestApiId:
+          Ref: ApiGatewayRestApi
 
+    # Here "TodosTable" is the name for cross-referencing  in the serverless.yml file
+    # It's not the name of the actual DynamoDB table. 
     TodosTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -191,7 +213,7 @@ resources:
               - AttributeName: createdAt
                 KeyType: RANGE
             Projection:
-              ProjectionType: ALL
+              ProjectionType: ALL # What attributes will be copied to an index
 
  
     AttachmentsBucket:

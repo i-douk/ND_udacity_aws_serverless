@@ -1,19 +1,20 @@
+import { APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda'
 import 'source-map-support/register'
-import { APIGatewayProxyEvent } from 'aws-lambda'
-import middy from 'middy'
-import { cors, httpErrorHandler } from 'middy/middlewares'
-import { updateTodo } from '../../helpers/todos'
-import { getUserId } from '../utils'
+import { updateTodo } from '../../helpers/todos';
 
-export const handler = middy(async (event: APIGatewayProxyEvent) => {
-  const todoId = event.pathParameters.todoId
-  const updatedTodo = JSON.parse(event.body)
-  const userId = getUserId(event)
-  const newItem = { todoId, userId, ...updatedTodo, createdAt: new Date().toISOString() }
-  await updateTodo(todoId, newItem, userId)
-  return { statusCode: 204, body: '' }
-})
+export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
 
-handler
-  .use(httpErrorHandler())
-  .use(cors({ credentials: true }))
+  const message = await updateTodo(event)
+
+  return {
+    statusCode: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*'
+    },
+    body: JSON.stringify({
+      message
+    })
+
+  }
+
+}

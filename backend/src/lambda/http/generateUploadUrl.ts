@@ -1,38 +1,19 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
-import middy from 'middy'
-import { cors, httpErrorHandler } from 'middy/middlewares'
-import { createAttachmentPresignedUrl } from '../../helpers/todos'
-import { getUserId } from '../utils'
+import { APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler } from 'aws-lambda'
+import 'source-map-support/register'
+import { generateUploadUrl } from '../../helpers/todos';
 
-export const handler = middy(
-  async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    const todoId = event.pathParameters.todoId
-    const userId = getUserId(event)
+export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
 
-    try {
-      const uploadUrl = await createAttachmentPresignedUrl(todoId, userId)
+  const url = await generateUploadUrl(event)
 
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          uploadUrl
-        })
-      }
-    } catch (error) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({
-          error
-        })
-      }
-    }
-  }
-)
-
-handler
-  .use(httpErrorHandler())
-  .use(
-    cors({
-      credentials: true
+  return {
+    statusCode: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*'
+    },
+    body: JSON.stringify({
+      uploadUrl: url
     })
-  )
+
+  }
+}

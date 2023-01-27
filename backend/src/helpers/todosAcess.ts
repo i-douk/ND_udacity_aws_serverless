@@ -1,56 +1,112 @@
-import AWS from 'aws-sdk'
-const AWSXRay = require('aws-xray-sdk')
+import { DocumentClient } from 'aws-sdk/clients/dynamodb';
+import AWSXRay from 'aws-xray-sdk-core';
+import * as originalAws from 'aws-sdk'
+
 import { TodoItem } from '../models/TodoItem'
 
+const AWS = AWSXRay.captureAWS(originalAws);
 
-const XAWS = AWSXRay.captureAWS(AWS)
-const dynamoDb = new XAWS.DynamoDB.DocumentClient()
-const todosTable = process.env.TODOS_TABLE
+export class TodoDataLayer {
 
-export async function getTodosForUser(partitionKeyValue: string): Promise<TodoItem[]> {
-  const result = await dynamoDb
-    .query({
-      TableName: todosTable,
-      IndexName: process.env.TODOS_CREATED_AT_INDEX,
+  constructor(
+    private readonly docClient: DocumentClient = new AWS.DynamoDB.DocumentClient(),
+    private readonly s3 = new AWS.S3({ signatureVersion: 'v4' }),
+    private readonly todosTable = process.env.TODOS_TABLE,
+    private readonly imageBucketName = process.env.IMAGE_BUCKET_NAME,
+    private readonly signedUrlExpiration = process.env.SIGNED_URL_EXPIRATION,
+    private readonly todoIdIndex = process.env.INDEX_NAME) {
+  }
+
+  async getAllTodos(todoItemDTO): Promise<TodoItem[]> {
+
+    const param = {
+      TableName: this.todosTable,
+      IndexName: this.todoIdIndex,
       KeyConditionExpression: 'userId = :userId',
       ExpressionAttributeValues: {
-        ':userId': partitionKeyValue
+        ':userId': todoItemDTO.userId
       }
-    })
-    .promise()
-  return result.Items.map((item: TodoItem) => item)
-}
+    }
 
-export async function updateTodo(todoId: string, updatedTodo: TodoItem, userId: string) {
-  await dynamoDb
-    .update({
-      TableName: todosTable,
+    const result = await this.docClient.query(param).promise()
+    const items = result.Items
+
+    return items as TodoItem[]
+
+  }
+
+  async createTodo(todoItemDTO): Promise<TodoItem> {
+
+    const param = {
+      TableName: this.todosTable,
+      Item: todoItemDTO
+    }
+
+    await this.docClient.put(param).promise()
+
+    return todoItemDTO as TodoItem
+  }
+
+  async deleteTodo(todoItemDTO): Promise<String> {
+
+    const param = {
+      TableName: this.todosTable,
       Key: {
-        userId,
-        todoId
+        "userId": todoItemDTO.userId,
+        "todoId": todoItemDTO.todoId
+      }
+    }
+
+    await this.docClient.delete(param).promise()
+
+    return "todo deleted"
+  }
+
+  async updateTodo(todoItemDTO): Promise<String> {
+
+    const param = {
+      TableName: this.todosTable,
+      Key: {
+        "userId": todoItemDTO.userId,
+        "todoId": todoItemDTO.todoId
       },
-      UpdateExpression: 'set #name = :name, dueDate = :dueDate, done = :done',
+      UpdateExpression: "set #tn = :n, dueDate=:dd, done=:d",
+      ExpressionAttributeNames: { '#tn': 'name' },
       ExpressionAttributeValues: {
-        ':name': updatedTodo.name,
-        ':dueDate': updatedTodo.dueDate,
-        ':done': updatedTodo.done
-      },
-      ExpressionAttributeNames: {
-        '#name': 'name'
-      },
-      ReturnValues: 'UPDATED_NEW'
+        ":n": todoItemDTO.name,
+        ":dd": todoItemDTO.dueDate,
+        ":d": todoItemDTO.done
+      }
+    }
+
+    await this.docClient.update(param).promise()
+
+    return "todo updated"
+  }
+
+  async generateUploadUrl(todoItemDTO): Promise<String> {
+
+    const signedUrl = await this.s3.getSignedUrl('putObject', {
+      Bucket: this.imageBucketName,
+      Key: todoItemDTO.todoId,
+      Expires: this.signedUrlExpiration
     })
-    .promise()
+
+    const param = {
+      TableName: this.todosTable,
+      Key: {
+        "userId": todoItemDTO.userId,
+        "todoId": todoItemDTO.todoId
+      },
+      UpdateExpression: "set attachmentUrl = :a",
+      ExpressionAttributeValues: {
+        ":a": `https://${this.imageBucketName}.s3.amazonaws.com/${todoItemDTO.todoId}`
+      }
+    }
+
+    await this.docClient.update(param).promise()
+
+    return signedUrl
+  }
 }
 
-export async function deleteTodo(todoId: string, userId: string): Promise<void> {
-  await dynamoDb
-    .delete({
-      TableName: todosTable,
-      Key: {
-        todoId,
-        userId
-      }
-    })
-    .promise()
-}
