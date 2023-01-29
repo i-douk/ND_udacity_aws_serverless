@@ -75,32 +75,24 @@ custom:
 functions:
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-              - dynamodb:GetItem
-              - dynamodb:Query
-              - dynamodb:Scan
-              - dynamodb:PutItem
-        Resource: "*"
 
-  GetTodos:
-    handler: src/lambda/http/getTodos.handler
-    events:
-      - http:
-            method: get
-            path: todos
-            cors: true
-            authorizer: Auth
-            reqValidatorName: RequestBodyValidator
+  # GetTodos:
+  #   handler: src/lambda/http/getTodos.handler
+  #   events:
+  #     - http:
+  #           method: get
+  #           path: todos
+  #           cors: true
+  #           authorizer: Auth
+  #           reqValidatorName: RequestBodyValidator
 
-    iamRoleStatements:
-        - Effect: Allow
-          Action:
-            - dynamodb:GetItem
-            - dynamodb:Query
-            - dynamodb:Scan
-          Resource: !GetAtt TodosTable.Arn
+  #   iamRoleStatements:
+  #       - Effect: Allow
+  #         Action:
+  #           - dynamodb:GetItem
+  #           - dynamodb:Query
+  #           - dynamodb:Scan
+  #         Resource: !GetAtt TodosTable.Arn
  
   CreateTodo:
     handler: src/lambda/http/createTodo.handler
@@ -117,59 +109,59 @@ functions:
           - dynamodb:PutItem
         Resource: !GetAtt TodosTable.Arn
  
-  UpdateTodo:
-    handler: src/lambda/http/updateTodo.handler
-    events:
-      - http:
-          method: patch
-          path: todos/{todoId}
-          cors: true
-          authorizer: Auth
-          reqValidatorName: UpdateBodyValidator
+  # UpdateTodo:
+  #   handler: src/lambda/http/updateTodo.handler
+  #   events:
+  #     - http:
+  #         method: patch
+  #         path: todos/{todoId}
+  #         cors: true
+  #         authorizer: Auth
+  #         reqValidatorName: UpdateBodyValidator
 
 
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - dynamodb:PutItem
-          - dynamodb:GetItem
-          - dynamodb:Query
-          - dynamodb:Scan
-          - dynamodb:UpdateItem
-          - dynamodb:DeleteItem
-        Resource: !GetAtt TodosTable.Arn
+  #   iamRoleStatements:
+  #     - Effect: Allow
+  #       Action:
+  #         - dynamodb:PutItem
+  #         - dynamodb:GetItem
+  #         - dynamodb:Query
+  #         - dynamodb:Scan
+  #         - dynamodb:UpdateItem
+  #         - dynamodb:DeleteItem
+  #       Resource: !GetAtt TodosTable.Arn
 
 
  
-  DeleteTodo:
-    handler: src/lambda/http/deleteTodo.handler
-    events:
-        - http:
-            method: delete
-            path: todos/{todoId}
-            cors: true
-            authorizer: Auth
-    iamRoleStatements:
-        - Effect: Allow
-          Action:
-            - dynamodb:DeleteItem
-          Resource: !GetAtt TodosTable.Arn
+  # DeleteTodo:
+  #   handler: src/lambda/http/deleteTodo.handler
+  #   events:
+  #       - http:
+  #           method: delete
+  #           path: todos/{todoId}
+  #           cors: true
+  #           authorizer: Auth
+  #   iamRoleStatements:
+  #       - Effect: Allow
+  #         Action:
+  #           - dynamodb:DeleteItem
+  #         Resource: !GetAtt TodosTable.Arn
 
 
-  GenerateUploadUrl:
-      handler: src/lambda/http/generateUploadUrl.handler
-      events:
-        - http:
-            method: post
-            path: todos/{todoId}/attachment
-            cors: true
-            authorizer: Auth
-      iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - s3:PutObject
-          - s3:GetObject
-        Resource: !GetAtt TodosTable.Arn
+  # GenerateUploadUrl:
+  #     handler: src/lambda/http/generateUploadUrl.handler
+  #     events:
+  #       - http:
+  #           method: post
+  #           path: todos/{todoId}/attachment
+  #           cors: true
+  #           authorizer: Auth
+  #     iamRoleStatements:
+  #     - Effect: Allow
+  #       Action:
+  #         - s3:PutObject
+  #         - s3:GetObject
+  #       Resource: !GetAtt TodosTable.Arn
 
 resources:
   Resources:
@@ -243,14 +235,6 @@ resources:
         ValidateRequestBody: true
         ValidateRequestParameters: false
 
-    UpdateBodyValidator :
-      Type: AWS::ApiGateway::RequestValidator
-      Properties:
-        Name: 'update-request-body-validator'
-        RestApiId:
-          Ref: ApiGatewayRestApi
-        ValidateRequestBody: true
-        ValidateRequestParameters: false
 
 
     BucketPolicy:
