@@ -7,6 +7,9 @@ import * as uuid from 'uuid'
 // import * as createError from 'http-errors'
 import { TodoDataLayer } from '../dataLayer/todoAccess'
 import { AttachmentUtils } from '../fileStorage/AttachmentUtils'
+// import { getUserId } from '../lambda/utils'
+// import { parseUserId } from '../auth/utils'
+// import { APIGatewayProxyEvent } from 'aws-lambda'
 
 
 const logger = createLogger('todosBusinessLogic')
@@ -31,3 +34,16 @@ export async function createTodo( newTodo : CreateTodoRequest, userId : string):
     return await todoDatalayer.createTodoItem(newItem)
   
   }
+
+  export async function getTodos(
+    userId: string
+  ): Promise<TodoItem[]> {
+    try {
+      const todos = await todoDatalayer.getTodosByUserId(userId)
+      logger.info(`Todos of user: ${userId}`, JSON.stringify(todos))
+      return todos
+    } catch (error) {
+      throw error.message('No todos found for you')
+    }
+  }
+  
