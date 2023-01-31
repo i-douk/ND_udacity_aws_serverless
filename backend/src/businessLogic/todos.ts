@@ -1,3 +1,4 @@
+import { UpdateTodoRequest } from './../../../client/src/types/UpdateTodoRequest';
 // import { AttachmentUtils } from './attachmentUtils';
 import { TodoItem } from '../models/TodoItem'
 import { CreateTodoRequest } from '../requests/CreateTodoRequest'
@@ -35,9 +36,7 @@ export async function createTodo( newTodo : CreateTodoRequest, userId : string):
   
   }
 
-  export async function getTodos(
-    userId: string
-  ): Promise<TodoItem[]> {
+  export async function getTodos(userId: string): Promise<TodoItem[]> {
     try {
       const todos = await todoDatalayer.getTodosByUserId(userId)
       logger.info(`Todos of user: ${userId}`, JSON.stringify(todos))
@@ -46,4 +45,35 @@ export async function createTodo( newTodo : CreateTodoRequest, userId : string):
       throw error.message('No todos found for you')
     }
   }
+
+
+  export async function updateTodo(userId: string, todoId: string, updatedTodo: UpdateTodoRequest): Promise<void> {
+    const todo = await todoDatalayer.getTodo(userId, todoId)
+
+    if (!todo) {
+        throw new Error('404')
+    }
+    
+    logger.info('Updating todo: ', userId, updatedTodo)
+    return await todoDatalayer.updateTodo(userId, todoId, updatedTodo)
+}
+
+export async function deleteTodo(userId: string, todoId: string): Promise<void> {
+
+  logger.info('delete S3 object', todoId)
+  await attachmentUtils.deleteAttachment(todoId)
+  logger.info('delete TODO item', userId, todoId)
+  await todoDatalayer.deleteTodo(userId, todoId)
+}
+
+export async function createAttachmentPresignedUrl(todoId: string ,userId: string ): Promise<String> {
+
+  const todo = await todoDatalayer.getTodo(userId, todoId)
+
+  if (!todo) {
+      throw new Error('Couldnt fetch Item 404')
+  }
   
+  logger.info('generating upload URL for todo: ', todo.todoId)
+  return attachmentUtils.getUploadUrl(todo.todoId)
+}
