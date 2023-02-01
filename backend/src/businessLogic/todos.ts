@@ -13,7 +13,7 @@ const logger = createLogger('todosBusinessLogic');
 
 const attachmentUtils = new AttachmentUtils();
 const todoDatalayer = new TodoDataLayer();
-const bucketName = process.env.TODOS_S3_BUCKET
+// const bucketName = process.env.TODOS_S3_BUCKET
 // Create new todo when logged in
 
   export async function createTodo( newTodo : CreateTodoRequest, userId : string): Promise<TodoItem> {
@@ -26,7 +26,6 @@ const bucketName = process.env.TODOS_S3_BUCKET
           userId,
           todoId,
           createdAt,
-          attachmentUrl: `https://${bucketName}.s3.amazonaws.com/${todoId}`,
           done : false,
           ...newTodo
       };
@@ -77,4 +76,15 @@ export async function generateUploadUrl(todoId: string): Promise<string> {
   const uploadUrl = await attachmentUtils.getUploadUrl(todoId)
 
   return uploadUrl
+}
+
+export async function updateAttachmentUrl (todoId : string, userId : string) : Promise<void> {
+  logger.info(`updating attachment Url ${todoId}`);
+
+    const todo = await todoDatalayer.getTodo(userId, todoId);
+    if (!todo) {
+        throw new Error('404');
+    }
+    logger.info('attachingUrl to todo: ', todoId);
+    return await todoDatalayer.updateAttachmentUrl(todoId, userId);
 }

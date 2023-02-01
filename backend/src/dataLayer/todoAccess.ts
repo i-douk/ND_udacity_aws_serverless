@@ -15,6 +15,7 @@ export class TodoDataLayer {
       private readonly docClient: DocumentClient = new XAWS.DynamoDB.DocumentClient(),
       private readonly todosTable = process.env.TODOS_TABLE,
       private readonly todoIdIndex = process.env.TODOS_CREATED_AT_INDEX,
+      private readonly bucketName= process.env.TODOS_S3_BUCKET
       )
        {}
 
@@ -80,18 +81,19 @@ export class TodoDataLayer {
       }
 
       
-  async updateAttachmentUrl(todoId: string, attachmentUrl: string) {
+  async updateAttachmentUrl(todoId: string, userId : string) {
     logger.info(`Updating attachment URL for todo ${todoId} in ${this.todosTable}`)
 
     await this.docClient.update({
       TableName: this.todosTable,
       Key: {
-        todoId
+        todoId, userId
       },
       UpdateExpression: 'set attachmentUrl = :attachmentUrl',
       ExpressionAttributeValues: {
-        ':attachmentUrl': attachmentUrl
-      }
+        ':attachmentUrl': `https://${this.bucketName}.s3.amazonaws.com/${todoId}`
+      },
+      ReturnValues: "NONE"
     }).promise()
   }
 
