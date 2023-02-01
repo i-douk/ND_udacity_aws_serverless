@@ -19,12 +19,6 @@ export class AttachmentUtils {
     }).promise()
 }
 
-
-// async getAttachmentUrl(attachmentId: string): Promise<string> {
-//   const attachmentUrl = `https://${this.bucketName}.s3.amazonaws.com/${attachmentId}`
-//   return attachmentUrl
-// }
-
   async getUploadUrl(todoId: string): Promise<string> {
   const uploadUrl = this.s3.getSignedUrl('putObject', {
     Bucket: this.bucketName,

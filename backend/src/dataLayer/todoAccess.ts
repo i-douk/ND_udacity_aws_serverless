@@ -8,9 +8,6 @@ import { TodoUpdate } from '../models/TodoUpdate';
 const XAWS = AWSXRay.captureAWS(AWS);
 const logger = createLogger('TodosAccess');
 
-//   private readonly s3 = new AWS.S3({ signatureVersion: 'v4' }),
-//   private readonly bucketName = process.env.TODOS_S3_BUCKET,
-//   private readonly signedUrlExpiration = process.env.SIGNED_URL_EXPIRATION,
 
 // Todo Data Layer Class
 export class TodoDataLayer {
