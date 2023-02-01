@@ -1,36 +1,37 @@
-import * as AWS from 'aws-sdk'
-import * as AWSXRay from 'aws-xray-sdk'
-import { DocumentClient } from 'aws-sdk/clients/dynamodb'
-import { createLogger } from '../utils/logger'
-import { TodoItem } from '../models/TodoItem'
-import { TodoUpdate } from '../models/TodoUpdate'
-// import { TodoUpdate } from '../models/TodoUpdate';
+import * as AWS from 'aws-sdk';
+import * as AWSXRay from 'aws-xray-sdk';
+import { DocumentClient } from 'aws-sdk/clients/dynamodb';
+import { createLogger } from '../utils/logger';
+import { TodoItem } from '../models/TodoItem';
+import { TodoUpdate } from '../models/TodoUpdate';
 
-const XAWS = AWSXRay.captureAWS(AWS)
+const XAWS = AWSXRay.captureAWS(AWS);
+const logger = createLogger('TodosAccess');
 
-const logger = createLogger('TodosAccess')
+//   private readonly s3 = new AWS.S3({ signatureVersion: 'v4' }),
+//   private readonly bucketName = process.env.TODOS_S3_BUCKET,
+//   private readonly signedUrlExpiration = process.env.SIGNED_URL_EXPIRATION,
 
+// Todo Data Layer Class
 export class TodoDataLayer {
-
     constructor(
       private readonly docClient: DocumentClient = new XAWS.DynamoDB.DocumentClient(),
       private readonly todosTable = process.env.TODOS_TABLE,
-      //   private readonly s3 = new AWS.S3({ signatureVersion: 'v4' }),
-    //   private readonly bucketName = process.env.TODOS_S3_BUCKET,
-    //   private readonly signedUrlExpiration = process.env.SIGNED_URL_EXPIRATION,
-      private readonly todoIdIndex = process.env.TODOS_CREATED_AT_INDEX
+      private readonly todoIdIndex = process.env.TODOS_CREATED_AT_INDEX,
       )
        {}
 
-      async createTodoItem(todo: TodoItem): Promise<TodoItem> {
+// Create todo TotoItem type using put method       
+      async createTodoItem(newTodo: TodoItem): Promise<TodoItem> {
         await this.docClient.put({
           TableName: this.todosTable,
-          Item: todo
-        }).promise()
-        logger.info("todo created" , todo)
-        return todo
+          Item: newTodo
+        }).promise();
+        logger.info("todo created" , newTodo.name);
+        return newTodo;
       }
-      
+
+//Get All todo by User 
       async  getTodosByUserId(userId: string): Promise<TodoItem[]> {
         const result = await this.docClient
           .query({
@@ -41,15 +42,14 @@ export class TodoDataLayer {
               ':userId': userId
             }
           })
-          .promise()
+          .promise();
       
-        const items = result.Items
-      
-        logger.info(`All todos for user ${userId} were fetched`)
-      
-        return items as TodoItem[]
+        const items = result.Items;
+        logger.info(`All todos for user ${userId} were fetched`);
+        return items as TodoItem[];
       }
 
+//Update todo to done state and store it in table
       async updateTodo(userId: string, todoId: string, updatedTodo: TodoUpdate): Promise<void> {
         await this.docClient.update({
           TableName: this.todosTable,
@@ -81,5 +81,21 @@ export class TodoDataLayer {
           Key: { userId, todoId }
         }).promise()
       }
+
+      
+  async updateAttachmentUrl(todoId: string, attachmentUrl: string) {
+    logger.info(`Updating attachment URL for todo ${todoId} in ${this.todosTable}`)
+
+    await this.docClient.update({
+      TableName: this.todosTable,
+      Key: {
+        todoId
+      },
+      UpdateExpression: 'set attachmentUrl = :attachmentUrl',
+      ExpressionAttributeValues: {
+        ':attachmentUrl': attachmentUrl
+      }
+    }).promise()
+  }
 
     }

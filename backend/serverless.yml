@@ -7,7 +7,7 @@ service: serverless-todo-app
 plugins:
   - serverless-webpack
   - serverless-reqvalidator-plugin
-  - serverless-plugin-canary-deployments
+  # - serverless-plugin-canary-deployments
   - serverless-iam-roles-per-function
   - serverless-dynamodb-local
   - serverless-offline
@@ -111,7 +111,7 @@ functions:
             summary: Create a new group
             description: Create a new group
             requestModels:
-              "application/json": CreateTodoRequest
+              application/json: CreateTodoRequest
 
     iamRoleStatements:
       - Effect: Allow
@@ -138,12 +138,9 @@ functions:
     iamRoleStatements:
       - Effect: Allow
         Action:
-          - dynamodb:PutItem
           - dynamodb:GetItem
-          - dynamodb:Query
-          - dynamodb:Scan
           - dynamodb:UpdateItem
-          - dynamodb:DeleteItem
+
         Resource: !GetAtt TodosTable.Arn
 
 
@@ -231,24 +228,6 @@ resources:
               ProjectionType: ALL # What attributes will be copied to an index
 
  
-    AttachmentsBucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: ${self:provider.environment.TODOS_S3_BUCKET}
-        CorsConfiguration:
-          CorsRules:
-            -
-              AllowedOrigins:
-                - '*'
-              AllowedHeaders:
-                - '*'
-              AllowedMethods:
-                - GET
-                - PUT
-                - POST
-                - DELETE
-                - HEAD
-              MaxAge: 3000
 
     RequestBodyValidator:
       Type: AWS::ApiGateway::RequestValidator
@@ -259,6 +238,24 @@ resources:
         ValidateRequestBody: true
         ValidateRequestParameters: false
 
+    AttachmentsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:provider.environment.TODOS_S3_BUCKET}
+        CorsConfiguration:
+          CorsRules:
+            - 
+              AllowedHeaders:
+                - "*"
+              AllowedOrigins:
+                - "*"
+              AllowedMethods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - HEAD
+              MaxAge: 3000
 
 
     BucketPolicy:
@@ -271,6 +268,8 @@ resources:
             - Sid: PublicReadForGetBucketObjects
               Effect: Allow
               Principal: '*'
-              Action: 's3:GetObject'
+              Action:
+                - 's3:GetObject'
+                - 's3:PutObject'
               Resource: 'arn:aws:s3:::${self:provider.environment.TODOS_S3_BUCKET}/*'
         Bucket: !Ref AttachmentsBucket

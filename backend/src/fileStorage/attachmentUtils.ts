@@ -9,13 +9,8 @@ export class AttachmentUtils {
    constructor (
      private readonly  s3 = new XAWS.S3({signatureVersion : 'v4'}),
      private readonly bucketName = s3bucket,
-     private readonly expirationTime = parseInt(signedUrlExpiration)
+     private readonly expirationTime = signedUrlExpiration,
       ) {}
-
-   getAttachmentUrl (todoId :string){
-    return `https://${this.bucketName}.s3.amazonaws.com/${todoId}`
-
-  }
 
   async deleteAttachment(todoId: string)  {        
     await this.s3.deleteObject({
@@ -24,14 +19,20 @@ export class AttachmentUtils {
     }).promise()
 }
 
-async getUploadUrl(todoId: string) {
-  const uploadUrl = await this.s3.getSignedUrl('putObject', {
+
+// async getAttachmentUrl(attachmentId: string): Promise<string> {
+//   const attachmentUrl = `https://${this.bucketName}.s3.amazonaws.com/${attachmentId}`
+//   return attachmentUrl
+// }
+
+  async getUploadUrl(todoId: string): Promise<string> {
+  const uploadUrl = this.s3.getSignedUrl('putObject', {
     Bucket: this.bucketName,
-    Key: `${todoId}.png`,
-    Expires: this.expirationTime,
+    Key: todoId,
+    Expires: parseInt(this.expirationTime)
   })
-  return uploadUrl as string
-}
+  return uploadUrl
+  }
 
 
 }
