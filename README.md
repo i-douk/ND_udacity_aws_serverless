@@ -1,3 +1,17 @@
+# Description
+
+This repository contains the submitted project for completing the AWS Cloud Developer Nanodegree program by Udacity in collaboration with AWS covering key AWS services and deployment strategies learned throughout the program as explicited below.
+
+# Key Topics Covered during the Nanodegree:
+
+AWS Deployment: Utilizing Elastic Beanstalk for simplified application hosting.
+Database and Storage: Implementation of RDS and S3 for robust storage solutions.
+Authentication: Securing endpoints with JWT authentication.
+Containerization: Containerizing applications and deploying a micro-service architecture to Kubernetes.
+Performance Analysis: Monitoring performance, analyzing usage metrics, and log management.
+Serverless Architecture: Leveraging AWS Lambda, API Gateway, DynamoDB, and S3 for scalable, cost-effective solutions.
+Search and Analytics: Utilizing Elasticsearch for advanced search capabilities.
+
 # Serverless TODO
 
 To implement this project, you need to implement a simple TODO application using AWS Lambda and Serverless framework. Search for all comments starting with the `TODO:` in the code to find the placeholders that you need to implement.
